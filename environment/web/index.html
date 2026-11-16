@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voice of Wolaita - RL Corpus Campaign</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0d1b1e;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;color:#eef3f1}
+  #hud,#log{position:absolute;top:14px;background:rgba(10,24,27,.82);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:14px 16px;backdrop-filter:blur(4px)}
+  #hud{left:14px;width:270px}
+  #log{right:14px;width:330px;font-size:12px;max-height:46vh;overflow:hidden}
+  h1{font-size:15px;margin:0 0 2px;letter-spacing:.3px}
+  .sub{font-size:11px;opacity:.65;margin-bottom:10px}
+  .row{display:flex;justify-content:space-between;font-size:12px;margin-top:8px}
+  .bar{height:7px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden;margin-top:3px}
+  .bar>i{display:block;height:100%;border-radius:4px;transition:width .4s}
+  #wer{font-size:34px;font-weight:700;line-height:1}
+  #werbox{display:flex;align-items:baseline;gap:8px;margin:6px 0 2px}
+  .tag{font-size:11px;opacity:.7}
+  #log div{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.07);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #log b{display:inline-block;width:34px;opacity:.6;font-weight:400}
+  .pos{color:#8fe388}.neg{color:#ff8a7a}
+  #banner{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(10,24,27,.86);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 18px;font-size:14px;min-width:420px;text-align:center}
+  #banner small{display:block;opacity:.7;font-size:12px;margin-top:2px}
+  #legend{position:absolute;left:14px;bottom:22px;max-width:360px;line-height:1.7;font-size:11px;background:rgba(10,24,27,.82);border-radius:10px;padding:8px 12px;border:1px solid rgba(255,255,255,.12)}
+  #legend span{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 10px;vertical-align:-1px}
+</style>
+<link rel="icon" href="data:,">
+</head>
+<body>
+<div id="hud">
+  <h1>Voice of Wolaita</h1>
+  <div class="sub">ASR corpus campaign &middot; RL data-lead agent</div>
+  <div class="tag">Whisper checkpoint WER (target &lt; 20%)</div>
+  <div id="werbox"><span id="wer">--</span><span class="tag" id="werstate"></span></div>
+  <div class="row"><span>Day</span><span id="day">0 / 60</span></div><div class="bar"><i id="b_day" style="background:#9fb4c7"></i></div>
+  <div class="row"><span>Budget (k ETB)</span><span id="budget">-</span></div><div class="bar"><i id="b_budget" style="background:#ffc914"></i></div>
+  <div class="row"><span>Transcribed hours (goal 15)</span><span id="hours">-</span></div><div class="bar"><i id="b_hours" style="background:#8fe388"></i></div>
+  <div class="row"><span>Annotator fatigue</span><span id="fat">-</span></div><div class="bar"><i id="b_fat" style="background:#ff8a7a"></i></div>
+  <div class="row"><span>Label error</span><span id="err">-</span></div>
+  <div class="row"><span>Partner goodwill</span><span id="gw">-</span></div>
+  <div class="row"><span>Fine-tunes run</span><span id="ft">0</span></div>
+  <div class="row" style="font-weight:600"><span>Episode return</span><span id="ret">0.0</span></div>
+</div>
+<div id="log"><h1 style="margin-bottom:6px">Agent decisions</h1><div id="loglist"></div></div>
+<div id="legend">Speech domains:<span style="background:#e4572e"></span>radio<span style="background:#17bebb"></span>TV<span style="background:#ffc914"></span>read<span style="background:#76b041"></span>community &nbsp;<br>faint bar = raw backlog &middot; solid bar = transcribed</div>
+<div id="banner"><span id="act">waiting for agent...</span><small id="evt"></small></div>
+
+<script type="importmap">{"imports":{"three":"./three.module.min.js"}}</script>
+<script type="module">
+import * as THREE from "./three.module.min.js";
+import { OrbitControls } from "./OrbitControls.js";
+
+const COL = [0xe4572e, 0x17bebb, 0xffc914, 0x76b041];
+const NAMES = ["Radio station", "TV studio", "Read speech", "Community"];
+const SITE = [[-15,-10],[15,-10],[-15,10],[15,10]];
+const HUB_X = [-3.3,-1.1,1.1,3.3];
+const GPU = [0,-12], REST = [0,12], QA = [6.5,0];
+
+const renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1b1e);
+scene.fog = new THREE.Fog(0x0d1b1e, 60, 120);
+const camera = new THREE.PerspectiveCamera(40, innerWidth/innerHeight, .1, 200);
+camera.position.set(0, 36, 43);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0,1.5,0); controls.maxPolarAngle = Math.PI/2.1; controls.update();
+addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+
+scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x2a3b2a, .9));
+const sun = new THREE.DirectionalLight(0xfff1d6, 1.6); sun.position.set(18,30,12); sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-32,right:32,top:32,bottom:-32}); scene.add(sun);
+
+const mat = (c,o={}) => new THREE.MeshStandardMaterial({color:c, roughness:.8, ...o});
+function box(w,h,d,c,x,y,z,o){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c,o));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;scene.add(m);return m}
+function cyl(rt,rb,h,c,x,y,z,seg=20,o){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat(c,o));m.position.set(x,y,z);m.castShadow=true;scene.add(m);return m}
+function label(text,x,y,z,scale=1,color="#eef3f1"){
+  const c=document.createElement("canvas");c.width=512;c.height=96;const g=c.getContext("2d");
+  g.font="600 44px -apple-system,Segoe UI,sans-serif";g.textAlign="center";g.textBaseline="middle";
+  g.fillStyle="rgba(10,24,27,.75)";const w=g.measureText(text).width+40;g.beginPath();g.roundRect(256-w/2,10,w,76,16);g.fill();
+  g.fillStyle=color;g.fillText(text,256,50);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));
+  s.position.set(x,y,z);s.scale.set(8*scale,1.5*scale,1);s.userData={canvas:c,ctx:g};scene.add(s);return s}
+function setLabel(s,text,color="#eef3f1"){const g=s.userData.ctx;g.clearRect(0,0,512,96);g.font="600 44px -apple-system,Segoe UI,sans-serif";g.textAlign="center";g.textBaseline="middle";
+  g.fillStyle="rgba(10,24,27,.75)";const w=g.measureText(text).width+40;g.beginPath();g.roundRect(256-w/2,10,w,76,16);g.fill();g.fillStyle=color;g.fillText(text,256,50);s.material.map.needsUpdate=true}
+
+// ---- ground (Wolaita highlands), paths
+const ground = new THREE.Mesh(new THREE.CircleGeometry(48,64), mat(0x3c6e47)); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+function path(x1,z1,x2,z2){const dx=x2-x1,dz=z2-z1,L=Math.hypot(dx,dz);const m=new THREE.Mesh(new THREE.PlaneGeometry(1.6,L),mat(0xb08d57));m.rotation.x=-Math.PI/2;m.rotation.z=-Math.atan2(dx,dz)+Math.PI;m.position.set((x1+x2)/2,.02,(z1+z2)/2);m.receiveShadow=true;scene.add(m)}
+SITE.forEach(([x,z])=>path(x,z,0,0)); path(...GPU,0,0); path(...REST,0,0);
+for(let i=0;i<46;i++){const a=Math.random()*6.28,r=24+Math.random()*20,x=Math.cos(a)*r,z=Math.sin(a)*r,h=1.6+Math.random()*1.8;
+  cyl(.18,.25,h,0x6b4a2b,x,h/2,z,8);const t=new THREE.Mesh(new THREE.SphereGeometry(1.1+Math.random()*.8,10,8),mat(0x2f5d34));t.scale.y=.55;t.position.set(x,h+.3,z);t.castShadow=true;scene.add(t)}
+
+// ---- source sites
+const availBars=[], availLbl=[];
+// radio: building + lattice tower
+{const [x,z]=SITE[0]; box(5,2.4,3.6,0xd9cbb3,x,1.2,z); box(5.3,.3,3.9,COL[0],x,2.55,z); cyl(.08,.35,8,0xbfc7cc,x+3.6,4,z,6);
+ for(let i=0;i<3;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(.7+i*.55,.05,8,32,Math.PI),mat(COL[0],{emissive:COL[0],emissiveIntensity:.7}));r.position.set(x+3.6,7.6,z);r.rotation.z=-Math.PI/2+Math.PI/2;scene.add(r)}}
+// tv: studio + dish
+{const [x,z]=SITE[1]; box(5.4,3,3.8,0xcdd6dd,x,1.5,z); box(2.6,1.5,.1,0x111a22,x,1.8,z+1.95,{emissive:COL[1],emissiveIntensity:.5});
+ const d=new THREE.Mesh(new THREE.SphereGeometry(1.3,24,12,0,6.28,0,1.1),mat(0xf1f5f7,{side:THREE.DoubleSide}));d.position.set(x-1.6,4.4,z);d.rotation.x=Math.PI*.8;d.castShadow=true;scene.add(d);cyl(.1,.1,1.4,0x8a949b,x-1.6,3.6,z)}
+// read-speech room: school building with sloped roof
+{const [x,z]=SITE[2]; box(5,2.2,3.4,0xf3e2b3,x,1.1,z); const r=new THREE.Mesh(new THREE.ConeGeometry(3.7,1.5,4),mat(0x8c3b2a));r.position.set(x,2.95,z);r.rotation.y=Math.PI/4;r.scale.z=.72;r.castShadow=true;scene.add(r);
+ box(.9,.12,.6,COL[2],x+3.4,.9,z);cyl(.05,.05,.9,0x555,x+3.4,.45,z);cyl(.04,.04,1.2,0x333,x+3.4,1.5,z+.2);const mic=new THREE.Mesh(new THREE.SphereGeometry(.16),mat(0x222));mic.position.set(x+3.4,2.15,z+.2);scene.add(mic)}
+// community: tukul huts
+{const [x,z]=SITE[3]; [[0,0,1.5],[2.8,1.6,1.1],[-2.4,1.9,1.2]].forEach(([dx,dz,s])=>{cyl(s,s,1.6*s,0xc9a36b,x+dx,.8*s,z+dz,18);const r=new THREE.Mesh(new THREE.ConeGeometry(s*1.45,s*1.5,18),mat(0x8a6a3a));r.position.set(x+dx,1.6*s+.75*s,z+dz);r.castShadow=true;scene.add(r)});
+ for(let i=0;i<4;i++){const a=i*1.57+.5;const p=new THREE.Mesh(new THREE.CapsuleGeometry(.2,.6,4,8),mat([0xe9c46a,0xf4a261,0xe76f51,0x2a9d8f][i]));p.position.set(x+Math.cos(a)*1.2-3.6,.55,z+Math.sin(a)*1.2-2.2);p.castShadow=true;scene.add(p)}}
+SITE.forEach(([x,z],d)=>{label(NAMES[d],x,6.6+(d==0?3:0),z,.8,"#"+COL[d].toString(16).padStart(6,"0"));
+  const sx=x+(x<0?-4.2:4.2); box(.9,5,.9,0x223036,sx,2.5,z,{transparent:true,opacity:.35});
+  const b=box(.8,1,.8,COL[d],sx,.5,z,{emissive:COL[d],emissiveIntensity:.35});availBars.push(b);availLbl.push(label("0.0 h new",sx,5.9,z,.55))});
+
+// ---- hub: annotation office + corpus vault
+box(13,.4,8.5,0xe9e4d8,0,.2,0); label("Annotation office",0,7.6,0,.9);
+const rawBars=[], annBars=[], annLbl=[];
+HUB_X.forEach((x,d)=>{rawBars.push(box(1.3,1,1.3,COL[d],x,.9,2.4,{transparent:true,opacity:.38}));
+  annBars.push(box(1.5,1,1.5,COL[d],x,.9,-1.6,{emissive:COL[d],emissiveIntensity:.25}));annLbl.push(label("0.0 h",x,1.4,-1.6,.5))});
+const annot=[]; [-5.2,-4.4,4.6,5.4].forEach((x,i)=>{box(.9,.5,.6,0x7a5c3e,x,.65,1.2+(i%2)*1.4);const p=new THREE.Mesh(new THREE.CapsuleGeometry(.22,.55,4,8),mat(0x8fe388));p.position.set(x,1.0,1.9+(i%2)*1.4);p.castShadow=true;scene.add(p);annot.push(p)});
+const qaRing=new THREE.Mesh(new THREE.TorusGeometry(1,.08,8,40),mat(0xffffff,{emissive:0xffffff,emissiveIntensity:1,transparent:true,opacity:0}));qaRing.rotation.x=Math.PI/2;qaRing.position.set(0,.6,0);scene.add(qaRing);
+box(1.6,1,1,0x5d6d7e,QA[0]+1.6,.9,0);label("QA desk",QA[0]+1.6,2.4,0,.55);
+
+// ---- GPU lab + WER gauge
+const gpu=[]; for(let i=0;i<3;i++){box(1.3,3.2,1.6,0x1c2530,GPU[0]-1.6+i*1.6,1.6,GPU[1]-1.5);for(let j=0;j<5;j++){gpu.push(box(.9,.12,.05,0x35e0a1,GPU[0]-1.6+i*1.6,.7+j*.5,GPU[1]-.68,{emissive:0x35e0a1,emissiveIntensity:.2}))}}
+label("GPU fine-tune lab",GPU[0],4.6,GPU[1]-1.5,.7);
+const gx=GPU[0]+6.5,gz=GPU[1]; box(1.2,10,.5,0x223036,gx,5,gz,{transparent:true,opacity:.45});
+const werBar=box(1,1,.6,0xff8a7a,gx,.5,gz,{emissive:0xff8a7a,emissiveIntensity:.4});
+const tgt=box(2.2,.08,.9,0xffffff,gx,10*0.20/0.7,gz,{emissive:0xffffff,emissiveIntensity:1});
+const werLbl=label("WER --",gx,11.2,gz,.8); label("target 20%",gx+2.9,10*0.20/0.7,gz,.5);
+
+// ---- rest garden
+{const [x,z]=REST; cyl(2.6,2.6,.15,0x4c8a57,x,.08,z,32); cyl(.25,.3,2.4,0x6b4a2b,x,1.2,z); const t=new THREE.Mesh(new THREE.SphereGeometry(2,16,12),mat(0x2f6d3a));t.position.set(x,3.6,z);t.scale.y=.7;t.castShadow=true;scene.add(t); box(1.6,.2,.5,0x7a5c3e,x+1.6,.45,z+.8); label("Rest / training",x,6,z,.7)}
+
+// ---- the agent: field vehicle of the data lead
+const agent=new THREE.Group();
+{const b=new THREE.Mesh(new THREE.BoxGeometry(1.5,.6,2.5),mat(0xffffff));b.position.y=.75;const c=new THREE.Mesh(new THREE.BoxGeometry(1.35,.55,1.3),mat(0x274c77));c.position.set(0,1.3,-.2);
+ agent.add(b,c);[[-.75,.9],[.75,.9],[-.75,-.9],[.75,-.9]].forEach(([x,z])=>{const w=new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.25,14),mat(0x1b1b1b));w.rotation.z=Math.PI/2;w.position.set(x,.36,z);agent.add(w)});
+ const beacon=new THREE.Mesh(new THREE.SphereGeometry(.22),mat(0xffd166,{emissive:0xffd166,emissiveIntensity:1.5}));beacon.position.set(0,1.75,-.2);agent.add(beacon);
+ agent.traverse(o=>{if(o.isMesh)o.castShadow=true});agent.position.set(0,.4,5.6);scene.add(agent)}
+const agentLbl=label("RL agent",0,3,5.6,.6,"#ffd166");
+let agentTarget=new THREE.Vector3(0,.4,5.6);
+
+// ---- flying data packets
+const packets=[];
+function fly(from,to,color,n=5){for(let i=0;i<n;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.28,10,8),mat(color,{emissive:color,emissiveIntensity:1}));scene.add(m);packets.push({m,from:new THREE.Vector3(...from),to:new THREE.Vector3(...to),t:-i*.12})}}
+
+// ---- state handling
+const $=id=>document.getElementById(id);
+let cur=null, epReturn=0, pulse=0, qaPulse=0, target={raw:[0,0,0,0],ann:[0,0,0,0],avail:[0,0,0,0],wer:.62};
+function apply(s){
+  if(s.action===null){epReturn=0;$("loglist").innerHTML=""} else epReturn+=s.reward;
+  cur=s; target.raw=s.raw; target.ann=s.annotated; target.avail=s.avail.map((v,i)=>v/s.avail_cap[i]); target.wer=s.wer;
+  $("wer").textContent=(s.wer*100).toFixed(1)+"%"; $("wer").style.color=s.wer<s.target?"#8fe388":"#ffb4a8";
+  $("werstate").textContent=s.wer<s.target?"TARGET REACHED":"";
+  $("day").textContent=s.day+" / "+s.max_days; $("b_day").style.width=100*s.day/s.max_days+"%";
+  $("budget").textContent=s.budget.toFixed(1)+" / "+s.budget0.toFixed(0); $("b_budget").style.width=100*s.budget/s.budget0+"%";
+  const H=s.annotated.reduce((a,b)=>a+b,0); $("hours").textContent=H.toFixed(1)+" h"; $("b_hours").style.width=Math.min(100,100*H/15)+"%";
+  $("fat").textContent=(s.fatigue*100).toFixed(0)+"%"; $("b_fat").style.width=100*s.fatigue+"%";
+  $("err").textContent=(s.label_err*100).toFixed(1)+"%"; $("gw").textContent=(s.goodwill*100).toFixed(0)+"%"; $("ft").textContent=s.finetunes;
+  $("ret").textContent=epReturn.toFixed(1);
+  $("act").textContent=s.action?("Day "+s.day+":  "+s.action.replaceAll("_"," ")+"   ("+(s.reward>=0?"+":"")+s.reward.toFixed(2)+")"):"New campaign starts";
+  $("evt").textContent=s.event||"";
+  if(s.action){const d=document.createElement("div");d.innerHTML=`<b>d${s.day}</b>${s.action.replaceAll("_"," ")} <span class="${s.reward>=0?"pos":"neg"}">${s.reward>=0?"+":""}${s.reward.toFixed(2)}</span> &middot; ${s.event}`;$("loglist").prepend(d);while($("loglist").children.length>14)$("loglist").lastChild.remove()}
+  const a=s.action_id, ok=!/cannot|no new|empty|nothing|not enough/.test(s.event);
+  if(a===null){agentTarget.set(0,.4,5.6)}
+  else if(a<=3){const [x,z]=SITE[a];agentTarget.set(x*.72,.4,z*.72);if(ok)fly([x,2,z],[HUB_X[a],1.5,2.4],COL[a])}
+  else if(a<=7){const d=a-4;agentTarget.set(HUB_X[d],.4,5.6);if(ok)fly([HUB_X[d],1.5,2.4],[HUB_X[d],2,-1.6],COL[d],3)}
+  else if(a===8){agentTarget.set(QA[0],.4,2);qaPulse=1}
+  else if(a===9){agentTarget.set(REST[0]+3.4,.4,REST[1]-1)}
+  else {agentTarget.set(GPU[0],.4,GPU[1]+3);if(ok){pulse=1;HUB_X.forEach((x,d)=>fly([x,2,-1.6],[GPU[0],2,GPU[1]-1],COL[d],2))}}
+}
+const queue=[]; let seen=0,lastApply=0;
+async function poll(){try{const r=await fetch("/state?since="+seen);const j=await r.json();if(j.n<seen){seen=0}else{queue.push(...j.states);seen=j.n}}catch(e){} setTimeout(poll,120)}
+poll();
+window.__applyState=apply;   // used for scripted screenshots
+
+const clock=new THREE.Clock();
+function setBar(m,h,base=.4){h=Math.max(.04,h);m.scale.y=h;m.position.y=base+h/2}
+function tick(){
+  const dt=Math.min(clock.getDelta(),.05), now=performance.now();
+  if(queue.length&&now-lastApply>(queue.length>6?90:380)){apply(queue.shift());lastApply=now}
+  const k=1-Math.pow(.002,dt);
+  for(let d=0;d<4;d++){
+    setBar(rawBars[d],THREE.MathUtils.lerp(rawBars[d].scale.y,target.raw[d]*.9,k));
+    setBar(annBars[d],THREE.MathUtils.lerp(annBars[d].scale.y,target.ann[d]*.9,k)); annLbl[d].position.y=annBars[d].scale.y+1.3;
+    setBar(availBars[d],THREE.MathUtils.lerp(availBars[d].scale.y,target.avail[d]*5,k),0);
+    if(cur){setLabel(annLbl[d],cur.annotated[d].toFixed(1)+" h");setLabel(availLbl[d],cur.avail[d].toFixed(1)+" h new")}
+  }
+  const w=THREE.MathUtils.lerp(werBar.scale.y,target.wer/0.7*10,k); setBar(werBar,w,0);
+  if(cur){const ok=cur.wer<cur.target;werBar.material.color.set(ok?0x8fe388:0xff8a7a);werBar.material.emissive.set(ok?0x8fe388:0xff8a7a);setLabel(werLbl,"WER "+(cur.wer*100).toFixed(1)+"%",ok?"#8fe388":"#ffb4a8");
+    const f=cur.fatigue;annot.forEach(p=>p.material.color.setRGB(.56+.44*f,.89-.5*f,.53-.2*f))}
+  // agent motion
+  const to=agentTarget.clone().sub(agent.position); const dist=to.length();
+  if(dist>.05){const step=Math.min(dist,dt*Math.max(14,dist*4));agent.position.add(to.normalize().multiplyScalar(step));agent.rotation.y=Math.atan2(to.x,to.z)}
+  agentLbl.position.set(agent.position.x,3,agent.position.z);
+  // packets
+  for(let i=packets.length-1;i>=0;i--){const p=packets[i];p.t+=dt*1.9;const t=Math.max(0,p.t);
+    if(t>=1){scene.remove(p.m);packets.splice(i,1);continue}
+    p.m.visible=p.t>=0;p.m.position.lerpVectors(p.from,p.to,t);p.m.position.y+=Math.sin(t*Math.PI)*4}
+  pulse=Math.max(0,pulse-dt*.9); gpu.forEach((g,i)=>g.material.emissiveIntensity=.2+pulse*(1.6+Math.sin(now/60+i)*1.2));
+  qaPulse=Math.max(0,qaPulse-dt*1.2); qaRing.material.opacity=qaPulse; qaRing.scale.setScalar(1+(1-qaPulse)*7);
+  controls.update(); renderer.render(scene,camera); requestAnimationFrame(tick);
+}
+tick();
+</script>
+</body>
+</html>
