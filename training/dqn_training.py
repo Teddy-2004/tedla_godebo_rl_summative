@@ -13,7 +13,7 @@ import torch
 from tensordict.nn import TensorDictSequential
 from torch import nn
 from torchrl.collectors import Collector as SyncDataCollector
-from torchrl.data import LazyTensorStorage, PrioritizedReplayBuffer, ReplayBuffer
+from torchrl.data import LazyTensorStorage, ReplayBuffer, TensorDictPrioritizedReplayBuffer
 from torchrl.modules import EGreedyModule, QValueActor
 from torchrl.objectives import DQNLoss, HardUpdate, SoftUpdate
 
@@ -62,8 +62,9 @@ def train(run_name: str, overrides: dict, total_frames: int = TOTAL_FRAMES, seed
     collector = SyncDataCollector(env, explore, frames_per_batch=cfg["frames_per_batch"],
                                   total_frames=total_frames, init_random_frames=cfg["warmup"])
     storage = LazyTensorStorage(cfg["buffer_size"])
-    rb = (PrioritizedReplayBuffer(alpha=0.6, beta=0.4, storage=storage,
-                                  batch_size=cfg["batch_size"])
+    rb = (TensorDictPrioritizedReplayBuffer(alpha=0.6, beta=0.4, storage=storage,
+                                            batch_size=cfg["batch_size"],
+                                            priority_key="td_error")
           if cfg["prioritized"] else ReplayBuffer(storage=storage, batch_size=cfg["batch_size"]))
     loss_fn = DQNLoss(qnet, action_space=env.action_spec, delay_value=True,
                       double_dqn=cfg["double_dqn"], loss_function="smooth_l1")

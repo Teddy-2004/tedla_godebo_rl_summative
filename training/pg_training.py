@@ -190,13 +190,16 @@ def train_ac(algo, run_name, cfg, total_frames, env, actor, critic, log):
         else:
             with torch.no_grad():
                 gae(data)
-            out = loss_fn(data.reshape(-1))
-            loss = out["loss_objective"] + out["loss_critic"] + out["loss_entropy"]
+            flat = data.reshape(-1)
+            out = loss_fn(flat)
+            loss = out["loss_objective"] + out["loss_critic"]
+            if "loss_entropy" in out.keys():      # absent when entropy_coef == 0
+                loss = loss + out["loss_entropy"]
             optim.zero_grad()
             loss.backward()
             nn.utils.clip_grad_norm_(loss_fn.parameters(), 0.5)
             optim.step()
-            ent, lval = out["entropy"].item(), out["loss_objective"].item()
+            ent, lval = _entropy(actor, flat), out["loss_objective"].item()
         log.loss.append([frames, lval])
         log.entropy.append([frames, ent])
         last_eval = _periodic_eval(log, actor, frames, last_eval, run_name, f"entropy {ent:.3f}")
