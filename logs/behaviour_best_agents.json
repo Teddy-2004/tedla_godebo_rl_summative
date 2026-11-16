@@ -1,0 +1,106 @@
+{
+ "dqn": {
+  "action_share": {
+   "collect_radio": 0.123,
+   "collect_tv": 0.055,
+   "collect_read": 0.0,
+   "collect_community": 0.0,
+   "annotate_radio": 0.387,
+   "annotate_tv": 0.166,
+   "annotate_read": 0.0,
+   "annotate_community": 0.0,
+   "quality_review": 0.001,
+   "rest_team": 0.173,
+   "finetune_evaluate": 0.095
+  },
+  "invalid_rate": 0.001,
+  "hours": [
+   11.2,
+   4.1,
+   1.0,
+   0.0
+  ],
+  "finetunes": 3.7,
+  "days": 39.1,
+  "budget_left": 27.1,
+  "greedy": null
+ },
+ "reinforce": {
+  "action_share": {
+   "collect_radio": 0.091,
+   "collect_tv": 0.095,
+   "collect_read": 0.043,
+   "collect_community": 0.019,
+   "annotate_radio": 0.309,
+   "annotate_tv": 0.199,
+   "annotate_read": 0.037,
+   "annotate_community": 0.013,
+   "quality_review": 0.008,
+   "rest_team": 0.119,
+   "finetune_evaluate": 0.068
+  },
+  "invalid_rate": 0.048,
+  "hours": [
+   9.6,
+   5.2,
+   2.2,
+   0.1
+  ],
+  "finetunes": 2.925,
+  "days": 53.4,
+  "budget_left": 16.2,
+  "greedy": 34.70730111598969
+ },
+ "a2c": {
+  "action_share": {
+   "collect_radio": 0.109,
+   "collect_tv": 0.06,
+   "collect_read": 0.008,
+   "collect_community": 0.009,
+   "annotate_radio": 0.307,
+   "annotate_tv": 0.149,
+   "annotate_read": 0.002,
+   "annotate_community": 0.001,
+   "quality_review": 0.004,
+   "rest_team": 0.28,
+   "finetune_evaluate": 0.072
+  },
+  "invalid_rate": 0.066,
+  "hours": [
+   12.0,
+   3.9,
+   1.0,
+   0.0
+  ],
+  "finetunes": 3.15,
+  "days": 55.675,
+  "budget_left": 20.4,
+  "greedy": -55.669876670837404
+ },
+ "ppo": {
+  "action_share": {
+   "collect_radio": 0.106,
+   "collect_tv": 0.093,
+   "collect_read": 0.002,
+   "collect_community": 0.002,
+   "annotate_radio": 0.319,
+   "annotate_tv": 0.194,
+   "annotate_read": 0.001,
+   "annotate_community": 0.006,
+   "quality_review": 0.001,
+   "rest_team": 0.166,
+   "finetune_evaluate": 0.11
+  },
+  "invalid_rate": 0.005,
+  "hours": [
+   9.7,
+   5.1,
+   1.0,
+   0.0
+  ],
+  "finetunes": 4.45,
+  "days": 40.4,
+  "budget_left": 23.3,
+  "greedy": 81.9429193496704
+ }
+}

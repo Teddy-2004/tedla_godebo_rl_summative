@@ -1,0 +1,174 @@
+{
+  "per_algo": {
+    "dqn": {
+      "run": "dqn_09",
+      "model_path": "models/dqn/dqn_09.pt",
+      "config": {
+        "lr": 0.001,
+        "gamma": 0.99,
+        "buffer_size": 50000,
+        "batch_size": 128,
+        "eps_start": 1.0,
+        "eps_end": 0.05,
+        "eps_decay_frac": 0.4,
+        "target_update": "soft",
+        "target_interval": 500,
+        "tau": 0.005,
+        "double_dqn": false,
+        "prioritized": false,
+        "hidden": [
+          128,
+          128
+        ],
+        "frames_per_batch": 100,
+        "updates_per_batch": 25,
+        "warmup": 2000
+      },
+      "final_eval": {
+        "mean_return": 82.30277729034424,
+        "std_return": 0.9529065844545689,
+        "success_rate": 1.0,
+        "mean_final_wer": 0.19072138047754275,
+        "mean_days": 38.925,
+        "mean_hours": 16.135343575171273
+      },
+      "unseen_eval": {
+        "mean_return": 57.561454916000365,
+        "std_return": 26.53875651521398,
+        "success_rate": 0.6,
+        "mean_final_wer": 0.20189705806520392,
+        "mean_days": 50.175,
+        "mean_hours": 16.135895273635562
+      },
+      "episodes_to_converge": 1711
+    },
+    "reinforce": {
+      "run": "reinforce_03",
+      "model_path": "models/pg/reinforce/reinforce_03.pt",
+      "config": {
+        "lr": 0.003,
+        "gamma": 0.99,
+        "episodes_per_update": 8,
+        "baseline": true,
+        "entropy_coef": 0.01,
+        "normalize_adv": true,
+        "hidden": [
+          128,
+          128
+        ]
+      },
+      "final_eval": {
+        "mean_return": 58.38704104423523,
+        "std_return": 18.680723076422527,
+        "success_rate": 0.7,
+        "mean_final_wer": 0.19572209165394086,
+        "mean_days": 54.55,
+        "mean_hours": 17.425071609763837,
+        "greedy": {
+          "mean_return": 34.70730111598969,
+          "std_return": 26.013392052734996,
+          "success_rate": 0.275,
+          "mean_final_wer": 0.2127583712566327,
+          "mean_days": 56.85,
+          "mean_hours": 16.706958130300542
+        }
+      },
+      "unseen_eval": {
+        "mean_return": 43.29342939853668,
+        "std_return": 20.34153822103666,
+        "success_rate": 0.3,
+        "mean_final_wer": 0.2134837954113397,
+        "mean_days": 57.475,
+        "mean_hours": 16.02855827129759
+      },
+      "episodes_to_converge": 779
+    },
+    "a2c": {
+      "run": "a2c_05",
+      "model_path": "models/pg/a2c/a2c_05.pt",
+      "config": {
+        "lr": 0.0007,
+        "gamma": 0.99,
+        "gae_lambda": 1.0,
+        "frames_per_batch": 240,
+        "entropy_coef": 0.01,
+        "critic_coef": 0.5,
+        "hidden": [
+          128,
+          128
+        ]
+      },
+      "final_eval": {
+        "mean_return": 54.92334337234497,
+        "std_return": 20.37536986349351,
+        "success_rate": 0.575,
+        "mean_final_wer": 0.2044621901698982,
+        "mean_days": 55.4,
+        "mean_hours": 16.89454231244217,
+        "greedy": {
+          "mean_return": -55.669876670837404,
+          "std_return": 2.4464965510167644,
+          "success_rate": 0.0,
+          "mean_final_wer": 0.584276823272253,
+          "mean_days": 60.0,
+          "mean_hours": 9.189593854534085
+        }
+      },
+      "unseen_eval": {
+        "mean_return": 35.91733827590942,
+        "std_return": 14.999890949310531,
+        "success_rate": 0.125,
+        "mean_final_wer": 0.2290809236395212,
+        "mean_days": 59.625,
+        "mean_hours": 15.553194063386863
+      },
+      "episodes_to_converge": 1707
+    },
+    "ppo": {
+      "run": "ppo_03",
+      "model_path": "models/pg/ppo/ppo_03.pt",
+      "config": {
+        "lr": 0.001,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "frames_per_batch": 2400,
+        "epochs": 8,
+        "minibatch": 240,
+        "clip_eps": 0.2,
+        "entropy_coef": 0.01,
+        "critic_coef": 0.5,
+        "normalize_adv": true,
+        "hidden": [
+          128,
+          128
+        ]
+      },
+      "final_eval": {
+        "mean_return": 81.29420967102051,
+        "std_return": 0.8581354197331721,
+        "success_rate": 1.0,
+        "mean_final_wer": 0.1901289636026126,
+        "mean_days": 40.425,
+        "mean_hours": 15.832991377050808,
+        "greedy": {
+          "mean_return": 81.9429193496704,
+          "std_return": 0.7177380166700466,
+          "success_rate": 1.0,
+          "mean_final_wer": 0.19140892362026135,
+          "mean_days": 39.35,
+          "mean_hours": 15.816884047576348
+        }
+      },
+      "unseen_eval": {
+        "mean_return": 53.006806588172914,
+        "std_return": 28.774328146635415,
+        "success_rate": 0.525,
+        "mean_final_wer": 0.20478678445760107,
+        "mean_days": 52.275,
+        "mean_hours": 15.594709746386107
+      },
+      "episodes_to_converge": 845
+    }
+  },
+  "overall": "dqn"
+}

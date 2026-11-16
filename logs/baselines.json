@@ -1,0 +1,22 @@
+{
+ "random": {
+  "seen": {
+   "mean_return": 14.06052607584897,
+   "success_rate": 0.0
+  },
+  "unseen": {
+   "mean_return": 9.935773605882307,
+   "success_rate": 0.0
+  }
+ },
+ "rule_based": {
+  "seen": {
+   "mean_return": 77.38570397529017,
+   "success_rate": 1.0
+  },
+  "unseen": {
+   "mean_return": 49.281929725104746,
+   "success_rate": 0.475
+  }
+ }
+}
