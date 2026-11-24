@@ -25,7 +25,7 @@ plt.rcParams.update({"font.size": 9, "axes.spines.top": False, "axes.spines.righ
                      "axes.edgecolor": MUTED, "axes.labelcolor": INK, "xtick.color": MUTED,
                      "ytick.color": MUTED, "axes.grid": True, "grid.color": GRID,
                      "grid.linewidth": 0.6, "axes.titlesize": 10, "axes.titleweight": "bold",
-                     "figure.dpi": 160, "savefig.bbox": "tight", "legend.frameon": False})
+                     "figure.dpi": 160, "savefig.dpi": 300, "savefig.bbox": "tight", "legend.frameon": False})
 
 COLUMNS = {
     "dqn": ["lr", "gamma", "buffer_size", "batch_size", "eps_decay_frac", "eps_end",
