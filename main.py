@@ -7,13 +7,12 @@
     uv run main.py --random              # untrained random agent, for contrast
     uv run main.py --no-gui --episodes 5 # terminal only
 
-The 3D viewer (three.js) opens in your browser; the same local server exposes
-the policy as a JSON API:  POST /act {"observation": [...19 floats...]}.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -52,6 +51,28 @@ def load_agent(algo: str | None):
     return act, f"{algo.upper()} run {entry['run']} ({entry['model_path']})"
 
 
+def choose_model() -> str | None:
+    """Interactive model picker. Enter (or a non-interactive run) selects the best model."""
+    if not BEST.exists():
+        return None
+    best = json.loads(BEST.read_text())
+    algos = list(best["per_algo"])
+    algos.sort(key=lambda a: -best["per_algo"][a]["final_eval"]["mean_return"])
+    if not sys.stdin.isatty():
+        return best["overall"]
+    print("\nTrained models (best run of each algorithm, 40 held-out test campaigns):")
+    for i, a in enumerate(algos, 1):
+        e = best["per_algo"][a]
+        tag = "  <- best" if a == best["overall"] else ""
+        print(f"  [{i}] {a.upper():10s} {e['run']:13s} mean return {e['final_eval']['mean_return']:5.1f} | "
+              f"success {e['final_eval']['success_rate']:.0%} | unseen-start success "
+              f"{e['unseen_eval']['success_rate']:.0%}{tag}")
+    choice = input(f"Select a model [1-{len(algos)}] (Enter = best): ").strip()
+    if choice.isdigit() and 1 <= int(choice) <= len(algos):
+        return algos[int(choice) - 1]
+    return best["overall"]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     ap.add_argument("--algo", choices=["dqn", "reinforce", "a2c", "ppo"], default=None)
@@ -64,6 +85,8 @@ def main():
     ap.add_argument("--no-browser", action="store_true", help="start viewer but do not open a tab")
     args = ap.parse_args()
 
+    if not args.random and args.algo is None:
+        args.algo = choose_model()
     act, desc = (None, "random agent") if args.random else load_agent(args.algo)
     if act is None:
         rng = np.random.default_rng(args.seed)

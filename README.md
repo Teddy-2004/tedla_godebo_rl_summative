@@ -15,7 +15,7 @@ compares **DQN, REINFORCE, A2C and PPO** (all implemented with **TorchRL**) on i
 ```bash
 git clone <this repo> && cd tedla_godebo_rl_summative
 uv sync
-uv run main.py                    # best agent, three.js 3D viewer + verbose terminal log
+uv run main.py                    # pick a model (Enter = best), 3D viewer + verbose terminal log
 ```
 
 Other entry points:
